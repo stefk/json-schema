@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Constraints;
 
+use stdClass;
 use JsonSchema\Exception\InvalidArgumentException;
 
 /**
@@ -22,14 +23,14 @@ class SchemaConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($element, $schema = null, $path = null, $i = null)
+    public function check($value, stdClass $schema = null, $path = null, $i = null)
     {
         if ($schema !== null) {
             // passed schema
-            $this->checkUndefined($element, $schema, '', '');
-        } elseif (property_exists($element, $this->inlineSchemaProperty)) {
+            $this->checkUndefined($value, $schema, '', '');
+        } elseif (property_exists($value, $this->inlineSchemaProperty)) {
             // inline schema
-            $this->checkUndefined($element, $element->{$this->inlineSchemaProperty}, '', '');
+            $this->checkUndefined($value, $value->{$this->inlineSchemaProperty}, '', '');
         } else {
             throw new InvalidArgumentException('no schema found to verify against');
         }

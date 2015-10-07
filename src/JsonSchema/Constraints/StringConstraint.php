@@ -9,6 +9,8 @@
 
 namespace JsonSchema\Constraints;
 
+use stdClass;
+
 /**
  * The StringConstraint Constraints, validates an string against a given schema
  *
@@ -20,24 +22,24 @@ class StringConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($element, $schema = null, $path = null, $i = null)
+    public function check($value, stdClass $schema = null, $path = null, $i = null)
     {
         // Verify maxLength
-        if (isset($schema->maxLength) && $this->strlen($element) > $schema->maxLength) {
+        if (isset($schema->maxLength) && $this->strlen($value) > $schema->maxLength) {
             $this->addError($path, "Must be at most " . $schema->maxLength . " characters long");
         }
 
         //verify minLength
-        if (isset($schema->minLength) && $this->strlen($element) < $schema->minLength) {
+        if (isset($schema->minLength) && $this->strlen($value) < $schema->minLength) {
             $this->addError($path, "Must be at least " . $schema->minLength . " characters long");
         }
 
         // Verify a regex pattern
-        if (isset($schema->pattern) && !preg_match('#' . str_replace('#', '\\#', $schema->pattern) . '#', $element)) {
+        if (isset($schema->pattern) && !preg_match('#' . str_replace('#', '\\#', $schema->pattern) . '#', $value)) {
             $this->addError($path, "Does not match the regex pattern " . $schema->pattern);
         }
 
-        $this->checkFormat($element, $schema, $path, $i);
+        $this->checkFormat($value, $schema, $path, $i);
     }
 
     private function strlen($string)

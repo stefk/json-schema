@@ -9,6 +9,8 @@
 
 namespace JsonSchema\Constraints;
 
+use stdClass;
+
 /**
  * The Constraints Interface
  *
@@ -49,10 +51,10 @@ interface ConstraintInterface
      * invokes the validation of an element
      *
      * @abstract
-     * @param mixed $value
-     * @param mixed $schema
-     * @param mixed $path
-     * @param mixed $i
+     * @param mixed             $value
+     * @param stdClass          $schema
+     * @param mixed             $path
+     * @param mixed             $i
      */
-    public function check($value, $schema = null, $path = null, $i = null);
+    public function check($value, stdClass $schema = null, $path = null, $i = null);
 }

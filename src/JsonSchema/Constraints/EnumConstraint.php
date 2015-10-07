@@ -9,6 +9,8 @@
 
 namespace JsonSchema\Constraints;
 
+use stdClass;
+
 /**
  * The EnumConstraint Constraints, validates an element against a given set of possibilities
  *
@@ -20,21 +22,21 @@ class EnumConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($element, $schema = null, $path = null, $i = null)
+    public function check($value, stdClass $schema = null, $path = null, $i = null)
     {
         // Only validate enum if the attribute exists
-        if ($element instanceof UndefinedConstraint && (!isset($schema->required) || !$schema->required)) {
+        if ($value instanceof UndefinedConstraint && (!isset($schema->required) || !$schema->required)) {
             return;
         }
 
         foreach ($schema->enum as $enum) {
-            $type = gettype($element);
+            $type = gettype($value);
             if ($type === gettype($enum)) {
                 if ($type == "object") {
-                    if ($element == $enum)
+                    if ($value == $enum)
                         return;
                 } else {
-                    if ($element === $enum)
+                    if ($value === $enum)
                         return;
 
                 }

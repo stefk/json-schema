@@ -9,6 +9,8 @@
 
 namespace JsonSchema\Constraints;
 
+use stdClass;
+
 /**
  * The ObjectConstraint Constraints, validates an object against a given schema
  *
@@ -20,24 +22,24 @@ class ObjectConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    function check($element, $definition = null, $path = null, $additionalProp = null, $patternProperties = null)
+    function check($value, stdClass $schema = null, $path = null, $additionalProp = null, $patternProperties = null)
     {
-        if ($element instanceof UndefinedConstraint) {
+        if ($value instanceof UndefinedConstraint) {
             return;
         }
 
         $matches = array();
         if ($patternProperties) {
-            $matches = $this->validatePatternProperties($element, $path, $patternProperties);
+            $matches = $this->validatePatternProperties($value, $path, $patternProperties);
         }
 
-        if ($definition) {
+        if ($schema) {
             // validate the definition properties
-            $this->validateDefinition($element, $definition, $path);
+            $this->validateDefinition($value, $schema, $path);
         }
 
         // additional the element properties
-        $this->validateElement($element, $matches, $definition, $path, $additionalProp);
+        $this->validateElement($value, $matches, $schema, $path, $additionalProp);
     }
 
     public function validatePatternProperties($element, $path, $patternProperties)

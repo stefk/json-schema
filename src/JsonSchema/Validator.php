@@ -30,7 +30,7 @@ class Validator extends Constraint
      *
      * {@inheritDoc}
      */
-    public function check($value, $schema = null, $path = null, $i = null)
+    public function check($value, \stdClass $schema = null, $path = null, $i = null)
     {
         $validator = new SchemaConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema);
