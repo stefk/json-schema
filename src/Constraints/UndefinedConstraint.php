@@ -24,7 +24,7 @@ class UndefinedConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema = null, $path = null, $i = null)
+    public function check($value, stdClass $schema, $path = null, $i = null)
     {
         if (is_null($schema)) {
             return;
@@ -58,7 +58,7 @@ class UndefinedConstraint extends Constraint
      * @param string $path
      * @param string $i
      */
-    public function validateTypes($value, $schema = null, $path = null, $i = null)
+    public function validateTypes($value, stdClass $schema, $path = null, $i = null)
     {
         // check array
         if (is_array($value)) {
@@ -69,7 +69,7 @@ class UndefinedConstraint extends Constraint
         if (is_object($value) && (isset($schema->properties) || isset($schema->patternProperties))) {
             $this->checkObject(
                 $value,
-                isset($schema->properties) ? $schema->properties : null,
+                isset($schema->properties) ? $schema->properties : new stdClass(),
                 $path,
                 isset($schema->additionalProperties) ? $schema->additionalProperties : null,
                 isset($schema->patternProperties) ? $schema->patternProperties : null
@@ -100,7 +100,7 @@ class UndefinedConstraint extends Constraint
      * @param string $path
      * @param string $i
      */
-    protected function validateCommonProperties($value, $schema = null, $path = null, $i = "")
+    protected function validateCommonProperties($value, stdClass $schema, $path = null, $i = "")
     {
         // if it extends another schema, it must pass that schema as well
         if (isset($schema->extends)) {
@@ -112,7 +112,9 @@ class UndefinedConstraint extends Constraint
                     $this->checkUndefined($value, $extends, $path, $i);
                 }
             } else {
-                $this->checkUndefined($value, $schema->extends, $path, $i);
+                // FIXME: "extends" shoudln't be null (see draft 3, 5.26)
+                $extends = $schema->extends === null ? new stdClass() : $schema->extends;
+                $this->checkUndefined($value, $extends, $path, $i);
             }
         }
 

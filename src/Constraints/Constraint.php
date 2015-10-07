@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Constraints;
 
+use stdClass;
 use JsonSchema\Uri\UriRetriever;
 
 /**
@@ -135,7 +136,7 @@ abstract class Constraint implements ConstraintInterface
      * @param mixed $path
      * @param mixed $i
      */
-    protected function checkArray($value, $schema = null, $path = null, $i = null)
+    protected function checkArray($value, stdClass $schema, $path = null, $i = null)
     {
         $validator = new CollectionConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema, $path, $i);
@@ -152,7 +153,7 @@ abstract class Constraint implements ConstraintInterface
      * @param mixed $i
      * @param mixed $patternProperties
      */
-    protected function checkObject($value, $schema = null, $path = null, $i = null, $patternProperties = null)
+    protected function checkObject($value, stdClass $schema, $path = null, $i = null, $patternProperties = null)
     {
         $validator = new ObjectConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema, $path, $i, $patternProperties);
@@ -168,7 +169,7 @@ abstract class Constraint implements ConstraintInterface
      * @param mixed $path
      * @param mixed $i
      */
-    protected function checkType($value, $schema = null, $path = null, $i = null)
+    protected function checkType($value, stdClass $schema, $path = null, $i = null)
     {
         $validator = new TypeConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema, $path, $i);
@@ -184,7 +185,7 @@ abstract class Constraint implements ConstraintInterface
      * @param mixed $path
      * @param mixed $i
      */
-    protected function checkUndefined($value, $schema = null, $path = null, $i = null)
+    protected function checkUndefined($value, stdClass $schema, $path = null, $i = null)
     {
         $validator = new UndefinedConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema, $path, $i);
@@ -200,7 +201,7 @@ abstract class Constraint implements ConstraintInterface
      * @param mixed $path
      * @param mixed $i
      */
-    protected function checkString($value, $schema = null, $path = null, $i = null)
+    protected function checkString($value, stdClass $schema, $path = null, $i = null)
     {
         $validator = new StringConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema, $path, $i);
@@ -216,7 +217,7 @@ abstract class Constraint implements ConstraintInterface
      * @param mixed $path
      * @param mixed $i
      */
-    protected function checkNumber($value, $schema = null, $path = null, $i = null)
+    protected function checkNumber($value, stdClass $schema, $path = null, $i = null)
     {
         $validator = new NumberConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema, $path, $i);
@@ -232,7 +233,7 @@ abstract class Constraint implements ConstraintInterface
      * @param mixed $path
      * @param mixed $i
      */
-    protected function checkEnum($value, $schema = null, $path = null, $i = null)
+    protected function checkEnum($value, stdClass $schema, $path = null, $i = null)
     {
         $validator = new EnumConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema, $path, $i);
@@ -240,7 +241,7 @@ abstract class Constraint implements ConstraintInterface
         $this->addErrors($validator->getErrors());
     }
 
-    protected function checkFormat($value, $schema = null, $path = null, $i = null)
+    protected function checkFormat($value, stdClass $schema, $path = null, $i = null)
     {
         $validator = new FormatConstraint($this->checkMode, $this->uriRetriever);
         $validator->check($value, $schema, $path, $i);

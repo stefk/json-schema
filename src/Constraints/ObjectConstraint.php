@@ -22,7 +22,7 @@ class ObjectConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    function check($value, stdClass $schema = null, $path = null, $additionalProp = null, $patternProperties = null)
+    function check($value, stdClass $schema, $path = null, $additionalProp = null, $patternProperties = null)
     {
         if ($value instanceof UndefinedConstraint) {
             return;
@@ -85,7 +85,7 @@ class ObjectConstraint extends Constraint
             // additional properties defined
             if (!in_array($i, $matches) && $additionalProp && !$definition) {
                 if ($additionalProp === true) {
-                    $this->checkUndefined($value, null, $path, $i);
+                    $this->checkUndefined($value, new stdClass(), $path, $i);
                 } else {
                     $this->checkUndefined($value, $additionalProp, $path, $i);
                 }
@@ -99,7 +99,7 @@ class ObjectConstraint extends Constraint
 
             if (!$definition) {
                 // normal property verification
-                $this->checkUndefined($value, new \stdClass(), $path, $i);
+                $this->checkUndefined($value, new stdClass(), $path, $i);
             }
         }
     }

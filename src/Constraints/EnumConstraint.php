@@ -22,7 +22,7 @@ class EnumConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema = null, $path = null, $i = null)
+    public function check($value, stdClass $schema, $path = null, $i = null)
     {
         // Only validate enum if the attribute exists
         if ($value instanceof UndefinedConstraint && (!isset($schema->required) || !$schema->required)) {

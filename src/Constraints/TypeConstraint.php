@@ -39,7 +39,7 @@ class TypeConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema = null, $path = null, $i = null)
+    public function check($value, stdClass $schema, $path = null, $i = null)
     {
         $type = isset($schema->type) ? $schema->type : null;
         $isValid = true;

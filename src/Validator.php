@@ -9,6 +9,7 @@
 
 namespace JsonSchema;
 
+use stdClass;
 use JsonSchema\Constraints\SchemaConstraint;
 use JsonSchema\Constraints\Constraint;
 
@@ -30,11 +31,9 @@ class Validator extends Constraint
      *
      * {@inheritDoc}
      */
-    public function check($value, \stdClass $schema = null, $path = null, $i = null)
+    public function check($value, stdClass $schema, $path = null, $i = null)
     {
-        $validator = new SchemaConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema);
-
-        $this->addErrors(array_unique($validator->getErrors(), SORT_REGULAR));
+        $this->checkUndefined($value, $schema, '', '');
+        $this->addErrors(array_unique($this->getErrors(), SORT_REGULAR));
     }
 }

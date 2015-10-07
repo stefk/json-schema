@@ -22,7 +22,7 @@ class CollectionConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema = null, $path = null, $i = null)
+    public function check($value, stdClass $schema, $path = null, $i = null)
     {
         // Verify minItems
         if (isset($schema->minItems) && count($value) < $schema->minItems) {
