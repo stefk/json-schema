@@ -9,9 +9,9 @@
 
 namespace JsonSchema\Constraints;
 
-use stdClass;
-use JsonSchema\Exception\InvalidArgumentException;
+use JsonSchema\Context;
 use JsonSchema\Uri\UriResolver;
+use stdClass;
 
 /**
  * The UndefinedConstraint Constraints
@@ -24,45 +24,30 @@ class UndefinedConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema, $path = null, $i = null)
+    public function check($value, stdClass $schema, Context $context)
     {
-        if (is_null($schema)) {
-            return;
-        }
-
-        if (!is_object($schema)) {
-            throw new InvalidArgumentException(
-                'Given schema must be an object in ' . $path
-                . ' but is a ' . gettype($schema)
-            );
-        }
-
-        $i = is_null($i) ? "" : $i;
-        $path = $this->incrementPath($path, $i);
-
         // check special properties
-        $this->validateCommonProperties($value, $schema, $path);
+        $this->validateCommonProperties($value, $schema, $context);
 
         // check allOf, anyOf, and oneOf properties
-        $this->validateOfProperties($value, $schema, $path);
+        $this->validateOfProperties($value, $schema, $context);
 
         // check known types
-        $this->validateTypes($value, $schema, $path, $i);
+        $this->validateTypes($value, $schema, $context);
     }
 
     /**
      * Validates the value against the types
      *
-     * @param mixed  $value
-     * @param mixed  $schema
-     * @param string $path
-     * @param string $i
+     * @param mixed     $value
+     * @param mixed     $schema
+     * @param Context   $context
      */
-    public function validateTypes($value, stdClass $schema, $path = null, $i = null)
+    public function validateTypes($value, stdClass $schema, Context $context)
     {
         // check array
         if (is_array($value)) {
-            $this->checkArray($value, $schema, $path, $i);
+            $this->checkArray($value, $schema, $context);
         }
 
         // check object
@@ -70,7 +55,7 @@ class UndefinedConstraint extends Constraint
             $this->checkObject(
                 $value,
                 isset($schema->properties) ? $schema->properties : new stdClass(),
-                $path,
+                $context,
                 isset($schema->additionalProperties) ? $schema->additionalProperties : null,
                 isset($schema->patternProperties) ? $schema->patternProperties : null
             );
@@ -78,29 +63,28 @@ class UndefinedConstraint extends Constraint
 
         // check string
         if (is_string($value)) {
-            $this->checkString($value, $schema, $path, $i);
+            $this->checkString($value, $schema, $context);
         }
 
         // check numeric
         if (is_numeric($value)) {
-            $this->checkNumber($value, $schema, $path, $i);
+            $this->checkNumber($value, $schema, $context);
         }
 
         // check enum
         if (isset($schema->enum)) {
-            $this->checkEnum($value, $schema, $path, $i);
+            $this->checkEnum($value, $schema, $context);
         }
     }
 
     /**
      * Validates common properties
      *
-     * @param mixed  $value
-     * @param mixed  $schema
-     * @param string $path
-     * @param string $i
-     */
-    protected function validateCommonProperties($value, stdClass $schema, $path = null, $i = "")
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
+     **/
+    protected function validateCommonProperties($value, stdClass $schema, Context $context)
     {
         // if it extends another schema, it must pass that schema as well
         if (isset($schema->extends)) {
@@ -109,12 +93,12 @@ class UndefinedConstraint extends Constraint
             }
             if (is_array($schema->extends)) {
                 foreach ($schema->extends as $extends) {
-                    $this->checkUndefined($value, $extends, $path, $i);
+                    $this->checkUndefined($value, $extends, $context);
                 }
             } else {
                 // FIXME: "extends" shoudln't be null (see draft 3, 5.26)
                 $extends = $schema->extends === null ? new stdClass() : $schema->extends;
-                $this->checkUndefined($value, $extends, $path, $i);
+                $this->checkUndefined($value, $extends, $context);
             }
         }
 
@@ -125,47 +109,42 @@ class UndefinedConstraint extends Constraint
                 // Draft 4 - Required is an array of strings - e.g. "required": ["foo", ...]
                 foreach ($schema->required as $required) {
                     if (!property_exists($value, $required)) {
-                        $this->addError($required, "The property " . $required . " is required");
+                        $context->addError("The property " . $required . " is required");
                     }
                 }
             } else if (isset($schema->required) && !is_array($schema->required)) {
                 // Draft 3 - Required attribute - e.g. "foo": {"type": "string", "required": true}
                 if ( $schema->required && $value instanceof UndefinedConstraint) {
-                    $this->addError($path, "Is missing and it is required");
+                    $context->addError("Is missing and it is required");
                 }
             }
         }
 
         // Verify type
         if (!($value instanceof UndefinedConstraint)) {
-            $this->checkType($value, $schema, $path);
+            $this->checkType($value, $schema, $context);
         }
 
         // Verify disallowed items
         if (isset($schema->disallow)) {
-            $initErrors = $this->getErrors();
-
+            $altContext = $context->duplicate();
             $typeSchema = new \stdClass();
             $typeSchema->type = $schema->disallow;
-            $this->checkType($value, $typeSchema, $path);
+            $this->checkType($value, $typeSchema, $altContext);
 
             // if no new errors were raised it must be a disallowed value
-            if (count($this->getErrors()) == count($initErrors)) {
-                $this->addError($path, "Disallowed value was matched");
-            } else {
-                $this->errors = $initErrors;
+            if ($altContext->hasSameErrors($context)) {
+                $context->addError("Disallowed value was matched");
             }
         }
 
         if (isset($schema->not)) {
-            $initErrors = $this->getErrors();
-            $this->checkUndefined($value, $schema->not, $path, $i);
+            $altContext = $context->duplicate();
+            $this->checkUndefined($value, $schema->not, $altContext);
 
             // if no new errors were raised then the instance validated against the "not" schema
-            if (count($this->getErrors()) == count($initErrors)) {
-                $this->addError($path, "Matched a schema which it should not");
-            } else {
-                $this->errors = $initErrors;
+            if (count($context->getErrors()) === count($altContext->getErrors())) {
+                $context->addError("Matched a schema which it should not");
             }
         }
 
@@ -173,31 +152,30 @@ class UndefinedConstraint extends Constraint
         if (is_object($value)) {
             if (isset($schema->minProperties)) {
                 if (count(get_object_vars($value)) < $schema->minProperties) {
-                    $this->addError($path, "Must contain a minimum of " . $schema->minProperties . " properties");
+                    $context->addError("Must contain a minimum of " . $schema->minProperties . " properties");
                 }
             }
             if (isset($schema->maxProperties)) {
                 if (count(get_object_vars($value)) > $schema->maxProperties) {
-                    $this->addError($path, "Must contain no more than " . $schema->maxProperties . " properties");
+                    $context->addError("Must contain no more than " . $schema->maxProperties . " properties");
                 }
             }
         }
 
         // Verify that dependencies are met
         if (is_object($value) && isset($schema->dependencies)) {
-            $this->validateDependencies($value, $schema->dependencies, $path);
+            $this->validateDependencies($value, $schema->dependencies, $context);
         }
     }
 
     /**
      * Validate allOf, anyOf, and oneOf properties
      *
-     * @param mixed  $value
-     * @param mixed  $schema
-     * @param string $path
-     * @param string $i
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    protected function validateOfProperties($value, $schema, $path, $i = "")
+    protected function validateOfProperties($value, $schema, Context $context)
     {
         // Verify type
         if ($value instanceof UndefinedConstraint) {
@@ -207,57 +185,50 @@ class UndefinedConstraint extends Constraint
         if (isset($schema->allOf)) {
             $isValid = true;
             foreach ($schema->allOf as $allOf) {
-                $initErrors = $this->getErrors();
-                $this->checkUndefined($value, $allOf, $path, $i);
-                $isValid = $isValid && (count($this->getErrors()) == count($initErrors));
+                $initErrors = $context->getErrors();
+                $this->checkUndefined($value, $allOf, $context);
+                $isValid = $isValid && (count($context->getErrors()) == count($initErrors));
             }
             if (!$isValid) {
-                $this->addError($path, "Failed to match all schemas");
+                $context->addError("Failed to match all schemas");
             }
         }
 
         if (isset($schema->anyOf)) {
             $isValid = false;
-            $startErrors = $this->getErrors();
+
             foreach ($schema->anyOf as $anyOf) {
-                $initErrors = $this->getErrors();
-                $this->checkUndefined($value, $anyOf, $path, $i);
-                if ($isValid = (count($this->getErrors()) == count($initErrors))) {
+                $altContext = $context->duplicate();
+                $this->checkUndefined($value, $anyOf, $altContext);
+
+                if ($isValid = 0 === count($altContext->getErrors())) {
                     break;
                 }
             }
+
             if (!$isValid) {
-                $this->addError($path, "Failed to match at least one schema");
-            } else {
-                $this->errors = $startErrors;
+                $context->addError("Failed to match at least one schema");
             }
         }
 
         if (isset($schema->oneOf)) {
-            $allErrors = array();
+            $cumulatingContext = $context->duplicate();
             $matchedSchemas = 0;
-            $startErrors = $this->getErrors();
+
             foreach ($schema->oneOf as $oneOf) {
-                $this->errors = array();
-                $this->checkUndefined($value, $oneOf, $path, $i);
-                if (count($this->getErrors()) == 0) {
+                $altContext = $context->duplicate();
+                $this->checkUndefined($value, $oneOf, $altContext);
+
+                if (count($altContext->getErrors()) === count($context->getErrors())) {
                     $matchedSchemas++;
+                } else {
+                    $cumulatingContext->merge($altContext);
                 }
-                $allErrors = array_merge($allErrors, array_values($this->getErrors()));
             }
+
             if ($matchedSchemas !== 1) {
-                $this->addErrors(
-                    array_merge(
-                        $allErrors,
-                        array(array(
-                            'property' => $path,
-                            'message' => "failed to match exactly one schema"
-                        ),),
-                        $startErrors
-                    )
-                );
-            } else {
-                $this->errors = $startErrors;
+                $context = $cumulatingContext;
+                $context->addError("failed to match exactly one schema");
             }
         }
     }
@@ -265,30 +236,29 @@ class UndefinedConstraint extends Constraint
     /**
      * Validate dependencies
      *
-     * @param mixed  $value
-     * @param mixed  $dependencies
-     * @param string $path
-     * @param string $i
+     * @param mixed     $value
+     * @param stdClass  $dependencies
+     * @param Context   $context
      */
-    protected function validateDependencies($value, $dependencies, $path, $i = "")
+    protected function validateDependencies($value, stdClass $dependencies, Context $context)
     {
         foreach ($dependencies as $key => $dependency) {
             if (property_exists($value, $key)) {
                 if (is_string($dependency)) {
                     // Draft 3 string is allowed - e.g. "dependencies": {"bar": "foo"}
                     if (!property_exists($value, $dependency)) {
-                        $this->addError($path, "$key depends on $dependency and $dependency is missing");
+                        $context->addError("$key depends on $dependency and $dependency is missing");
                     }
                 } else if (is_array($dependency)) {
                     // Draft 4 must be an array - e.g. "dependencies": {"bar": ["foo"]}
                     foreach ($dependency as $d) {
                         if (!property_exists($value, $d)) {
-                            $this->addError($path, "$key depends on $d and $d is missing");
+                            $context->addError("$key depends on $d and $d is missing");
                         }
                     }
                 } else if (is_object($dependency)) {
                     // Schema - e.g. "dependencies": {"bar": {"properties": {"foo": {...}}}}
-                    $this->checkUndefined($value, $dependency, $path, $i);
+                    $this->checkUndefined($value, $dependency, $context);
                 }
             }
         }

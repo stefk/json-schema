@@ -9,8 +9,9 @@
 
 namespace JsonSchema\Constraints;
 
-use stdClass;
+use JsonSchema\Context;
 use JsonSchema\Uri\UriRetriever;
+use stdClass;
 
 /**
  * The Base Constraints, all Validators should extend this class
@@ -60,50 +61,6 @@ abstract class Constraint implements ConstraintInterface
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function addError($path, $message)
-    {
-        $this->errors[] = array(
-            'property' => $path,
-            'message' => $message
-        );
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function addErrors(array $errors)
-    {
-        $this->errors = array_merge($this->errors, $errors);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getErrors()
-    {
-        return $this->errors;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function isValid()
-    {
-        return !$this->getErrors();
-    }
-
-    /**
-     * Clears any reported errors.  Should be used between
-     * multiple validation checks.
-     */
-    public function reset()
-    {
-        $this->errors = array();
-    }
-
-    /**
      * Bubble down the path
      *
      * @param string $path Current path
@@ -131,122 +88,99 @@ abstract class Constraint implements ConstraintInterface
     /**
      * Validates an array
      *
-     * @param mixed $value
-     * @param mixed $schema
-     * @param mixed $path
-     * @param mixed $i
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    protected function checkArray($value, stdClass $schema, $path = null, $i = null)
+    protected function checkArray($value, stdClass $schema, Context $context)
     {
         $validator = new CollectionConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema, $path, $i);
-
-        $this->addErrors($validator->getErrors());
+        $validator->check($value, $schema, $context);
     }
 
     /**
      * Validates an object
      *
-     * @param mixed $value
-     * @param mixed $schema
-     * @param mixed $path
-     * @param mixed $i
-     * @param mixed $patternProperties
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
+     * @param mixed     $patternProperties
      */
-    protected function checkObject($value, stdClass $schema, $path = null, $i = null, $patternProperties = null)
+    protected function checkObject($value, stdClass $schema, Context $context, $patternProperties = null)
     {
         $validator = new ObjectConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema, $path, $i, $patternProperties);
-
-        $this->addErrors($validator->getErrors());
+        $validator->check($value, $schema, $context, $patternProperties);
     }
 
     /**
      * Validates the type of a property
      *
-     * @param mixed $value
-     * @param mixed $schema
-     * @param mixed $path
-     * @param mixed $i
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    protected function checkType($value, stdClass $schema, $path = null, $i = null)
+    protected function checkType($value, stdClass $schema, Context $context)
     {
         $validator = new TypeConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema, $path, $i);
-
-        $this->addErrors($validator->getErrors());
+        $validator->check($value, $schema, $context);
     }
 
     /**
      * Checks a undefined element
      *
-     * @param mixed $value
-     * @param mixed $schema
-     * @param mixed $path
-     * @param mixed $i
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    protected function checkUndefined($value, stdClass $schema, $path = null, $i = null)
+    protected function checkUndefined($value, stdClass $schema, Context $context)
     {
         $validator = new UndefinedConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema, $path, $i);
-
-        $this->addErrors($validator->getErrors());
+        $validator->check($value, $schema, $context);
     }
 
     /**
      * Checks a string element
      *
-     * @param mixed $value
-     * @param mixed $schema
-     * @param mixed $path
-     * @param mixed $i
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    protected function checkString($value, stdClass $schema, $path = null, $i = null)
+    protected function checkString($value, stdClass $schema, Context $context)
     {
         $validator = new StringConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema, $path, $i);
-
-        $this->addErrors($validator->getErrors());
+        $validator->check($value, $schema, $context);
     }
 
     /**
      * Checks a number element
      *
-     * @param mixed $value
-     * @param mixed $schema
-     * @param mixed $path
-     * @param mixed $i
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    protected function checkNumber($value, stdClass $schema, $path = null, $i = null)
+    protected function checkNumber($value, stdClass $schema, Context $context)
     {
         $validator = new NumberConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema, $path, $i);
-
-        $this->addErrors($validator->getErrors());
+        $validator->check($value, $schema, $context);
     }
 
     /**
      * Checks a enum element
      *
-     * @param mixed $value
-     * @param mixed $schema
-     * @param mixed $path
-     * @param mixed $i
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    protected function checkEnum($value, stdClass $schema, $path = null, $i = null)
+    protected function checkEnum($value, stdClass $schema, Context $context)
     {
         $validator = new EnumConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema, $path, $i);
-
-        $this->addErrors($validator->getErrors());
+        $validator->check($value, $schema, $context);
     }
 
-    protected function checkFormat($value, stdClass $schema, $path = null, $i = null)
+    protected function checkFormat($value, stdClass $schema, Context $context)
     {
         $validator = new FormatConstraint($this->checkMode, $this->uriRetriever);
-        $validator->check($value, $schema, $path, $i);
-
-        $this->addErrors($validator->getErrors());
+        $validator->check($value, $schema, $context);
     }
 
     /**

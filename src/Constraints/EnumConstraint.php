@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Constraints;
 
+use JsonSchema\Context;
 use stdClass;
 
 /**
@@ -22,7 +23,7 @@ class EnumConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema, $path = null, $i = null)
+    public function check($value, stdClass $schema, Context $context)
     {
         // Only validate enum if the attribute exists
         if ($value instanceof UndefinedConstraint && (!isset($schema->required) || !$schema->required)) {
@@ -43,6 +44,6 @@ class EnumConstraint extends Constraint
             }
         }
 
-        $this->addError($path, "Does not have a value in the enumeration " . print_r($schema->enum, true));
+        $context->addError("Does not have a value in the enumeration " . print_r($schema->enum, true));
     }
 }

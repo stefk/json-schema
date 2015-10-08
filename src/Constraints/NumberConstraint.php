@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Constraints;
 
+use JsonSchema\Context;
 use stdClass;
 
 /**
@@ -22,49 +23,49 @@ class NumberConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema, $path = null, $i = null)
+    public function check($value, stdClass $schema, Context $context)
     {
         // Verify minimum
         if (isset($schema->exclusiveMinimum)) {
             if (isset($schema->minimum)) {
                 if ($schema->exclusiveMinimum && $value === $schema->minimum) {
-                    $this->addError($path, "Must have a minimum value greater than boundary value of " . $schema->minimum);
+                    $context->addError("Must have a minimum value greater than boundary value of " . $schema->minimum);
                 } else if ($value < $schema->minimum) {
-                    $this->addError($path, "Must have a minimum value of " . $schema->minimum);
+                    $context->addError("Must have a minimum value of " . $schema->minimum);
                 }
             } else {
-                $this->addError($path, "Use of exclusiveMinimum requires presence of minimum");
+                $context->addError("Use of exclusiveMinimum requires presence of minimum");
             }
         } else if (isset($schema->minimum) && $value < $schema->minimum) {
-            $this->addError($path, "Must have a minimum value of " . $schema->minimum);
+            $context->addError("Must have a minimum value of " . $schema->minimum);
         }
 
         // Verify maximum
         if (isset($schema->exclusiveMaximum)) {
             if (isset($schema->maximum)) {
                 if ($schema->exclusiveMaximum && $value === $schema->maximum) {
-                    $this->addError($path, "Must have a maximum value less than boundary value of " . $schema->maximum);
+                    $context->addError("Must have a maximum value less than boundary value of " . $schema->maximum);
                 } else if ($value > $schema->maximum) {
-                    $this->addError($path, "Must have a maximum value of " . $schema->maximum);
+                    $context->addError("Must have a maximum value of " . $schema->maximum);
                 }
             } else {
-                $this->addError($path, "Use of exclusiveMaximum requires presence of maximum");
+                $context->addError("Use of exclusiveMaximum requires presence of maximum");
             }
         } else if (isset($schema->maximum) && $value > $schema->maximum) {
-            $this->addError($path, "Must have a maximum value of " . $schema->maximum);
+            $context->addError("Must have a maximum value of " . $schema->maximum);
         }
 
         // Verify divisibleBy - Draft v3
         if (isset($schema->divisibleBy) && $this->fmod($value, $schema->divisibleBy) != 0) {
-            $this->addError($path, "Is not divisible by " . $schema->divisibleBy);
+            $context->addError("Is not divisible by " . $schema->divisibleBy);
         }
 
         // Verify multipleOf - Draft v4
         if (isset($schema->multipleOf) && $this->fmod($value, $schema->multipleOf) != 0) {
-            $this->addError($path, "Must be a multiple of " . $schema->multipleOf);
+            $context->addError("Must be a multiple of " . $schema->multipleOf);
         }
 
-        $this->checkFormat($value, $schema, $path, $i);
+        $this->checkFormat($value, $schema, $context);
     }
 
     private function fmod($number1, $number2)

@@ -9,9 +9,10 @@
 
 namespace JsonSchema\Constraints;
 
-use stdClass;
+use JsonSchema\Context;
 use JsonSchema\Exception\InvalidArgumentException;
 use UnexpectedValueException as StandardUnexpectedValueException;
+use stdClass;
 
 /**
  * The TypeConstraint Constraints, validates an element against a given type
@@ -39,7 +40,7 @@ class TypeConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema, $path = null, $i = null)
+    public function check($value, stdClass $schema, Context $context)
     {
         $type = isset($schema->type) ? $schema->type : null;
         $isValid = true;
@@ -47,29 +48,31 @@ class TypeConstraint extends Constraint
         if (is_array($type)) {
             // @TODO refactor
             $validatedOneType = false;
-            $errors = array();
-            foreach ($type as $tp) {
-                $validator = new TypeConstraint($this->checkMode);
-                $subSchema = new \stdClass();
-                $subSchema->type = $tp;
-                $validator->check($value, $subSchema, $path, null);
-                $error = $validator->getErrors();
+            $cumulatingContext = $context->duplicate();
 
-                if (!count($error)) {
+            foreach ($type as $tp) {
+                $typeContext = $context->duplicate();
+                $validator = new TypeConstraint($this->checkMode);
+                $subSchema = new stdClass();
+                $subSchema->type = $tp;
+                $validator->check($value, $subSchema, $typeContext);
+
+                if ($typeContext->hasSameErrors($context)) {
                     $validatedOneType = true;
                     break;
                 }
 
-                $errors = $error;
+                // accumulate errors for each type
+                $cumulatingContext->merge($typeContext);
             }
 
             if (!$validatedOneType) {
-                $this->addErrors($errors);
+                $context = $cumulatingContext;
 
                 return;
             }
         } elseif (is_object($type)) {
-            $this->checkUndefined($value, $type, $path);
+            $this->checkUndefined($value, $type, $context);
         } else {
             $isValid = $this->validateType($value, $type);
         }
@@ -83,7 +86,7 @@ class TypeConstraint extends Constraint
                         implode(', ', array_filter(self::$wording)))
                 );
             }
-            $this->addError($path, gettype($value) . " value found, but " . self::$wording[$type] . " is required");
+            $context->addError(gettype($value) . " value found, but " . self::$wording[$type] . " is required");
         }
     }
 

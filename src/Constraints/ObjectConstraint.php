@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Constraints;
 
+use JsonSchema\Context;
 use stdClass;
 
 /**
@@ -22,33 +23,33 @@ class ObjectConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    function check($value, stdClass $schema, $path = null, $additionalProp = null, $patternProperties = null)
+    function check($value, stdClass $schema, Context $context)
     {
         if ($value instanceof UndefinedConstraint) {
             return;
         }
 
         $matches = array();
-        if ($patternProperties) {
-            $matches = $this->validatePatternProperties($value, $path, $patternProperties);
-        }
 
-        if ($schema) {
-            // validate the definition properties
-            $this->validateDefinition($value, $schema, $path);
-        }
+
+//        if ($patternProperties) {
+//            $matches = $this->validatePatternProperties($value, $path, $patternProperties);
+//        }
+
+        // validate the definition properties
+        $this->validateDefinition($value, $schema, $context);
 
         // additional the element properties
-        $this->validateElement($value, $matches, $schema, $path, $additionalProp);
+//        $this->validateElement($value, $matches, $schema, $path, $additionalProp);
     }
 
-    public function validatePatternProperties($element, $path, $patternProperties)
+    public function validatePatternProperties($element, Context $context, $patternProperties)
     {
         $matches = array();
         foreach ($patternProperties as $pregex => $schema) {
             // Validate the pattern before using it to test for matches
             if (@preg_match('/'. $pregex . '/', '') === false) {
-                $this->addError($path, 'The pattern "' . $pregex . '" is invalid');
+                $context->addError('The pattern "' . $pregex . '" is invalid');
                 continue;
             }
             foreach ($element as $i => $value) {
@@ -67,10 +68,10 @@ class ObjectConstraint extends Constraint
      * @param \stdClass $element          Element to validate
      * @param array     $matches          Matches from patternProperties (if any)
      * @param \stdClass $objectDefinition ObjectConstraint definition
-     * @param string    $path             Path to test?
+     * @param Context   $context
      * @param mixed     $additionalProp   Additional properties
      */
-    public function validateElement($element, $matches, $objectDefinition = null, $path = null, $additionalProp = null)
+    public function validateElement($element, $matches, $objectDefinition = null, Context $context, $additionalProp = null)
     {
         foreach ($element as $i => $value) {
 
@@ -79,7 +80,7 @@ class ObjectConstraint extends Constraint
 
             // no additional properties allowed
             if (!in_array($i, $matches) && $additionalProp === false && $this->inlineSchemaProperty !== $i && !$definition) {
-                $this->addError($path, "The property - " . $i . " - is not defined and the definition does not allow additional properties");
+                $context->addError("The property - " . $i . " - is not defined and the definition does not allow additional properties");
             }
 
             // additional properties defined
@@ -94,12 +95,12 @@ class ObjectConstraint extends Constraint
             // property requires presence of another
             $require = $this->getProperty($definition, 'requires');
             if ($require && !$this->getProperty($element, $require)) {
-                $this->addError($path, "The presence of the property " . $i . " requires that " . $require . " also be present");
+                $context->addError("The presence of the property " . $i . " requires that " . $require . " also be present");
             }
 
             if (!$definition) {
                 // normal property verification
-                $this->checkUndefined($value, new stdClass(), $path, $i);
+                $this->checkUndefined($value, new stdClass(), $context);
             }
         }
     }
@@ -107,16 +108,16 @@ class ObjectConstraint extends Constraint
     /**
      * Validates the definition properties
      *
-     * @param \stdClass $element          Element to validate
-     * @param \stdClass $objectDefinition ObjectConstraint definition
-     * @param string    $path             Path?
+     * @param stdClass $element          Element to validate
+     * @param stdClass $objectDefinition ObjectConstraint definition
+     * @param Context $context
      */
-    public function validateDefinition($element, $objectDefinition = null, $path = null)
+    public function validateDefinition($element, stdClass $objectDefinition, Context $context)
     {
         foreach ($objectDefinition as $i => $value) {
             $property = $this->getProperty($element, $i, new UndefinedConstraint());
             $definition = $this->getProperty($objectDefinition, $i);
-            $this->checkUndefined($property, $definition, $path, $i);
+            $this->checkUndefined($property, $definition, $context);
         }
     }
 

@@ -9,52 +9,25 @@
 
 namespace JsonSchema\Constraints;
 
+use JsonSchema\Context;
 use stdClass;
 
 /**
  * The Constraints Interface
  *
  * @author Robert Schönthal <seroscho@googlemail.com>
+ * @author Stéphane Klein   <stephaneklein221@gmail.com>
  */
 interface ConstraintInterface
 {
     /**
-     * returns all collected errors
-     *
-     * @return array
-     */
-    public function getErrors();
-
-    /**
-     * adds errors to this validator
-     *
-     * @param array $errors
-     */
-    public function addErrors(array $errors);
-
-    /**
-     * adds an error
-     *
-     * @param $path
-     * @param $message
-     */
-    public function addError($path, $message);
-
-    /**
-     * checks if the validator has not raised errors
-     *
-     * @return boolean
-     */
-    public function isValid();
-
-    /**
-     * invokes the validation of an element
+     * Validates a value against a JSON schema and populates
+     * the validation context with any encountered error.
      *
      * @abstract
-     * @param mixed             $value
-     * @param stdClass          $schema
-     * @param mixed             $path
-     * @param mixed             $i
+     * @param mixed     $value
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    public function check($value, stdClass $schema, $path = null, $i = null);
+    public function check($value, stdClass $schema, Context $context);
 }

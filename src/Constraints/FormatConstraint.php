@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Constraints;
 
+use JsonSchema\Context;
 use stdClass;
 
 /**
@@ -22,7 +23,7 @@ class FormatConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema, $path = null, $i = null)
+    public function check($value, stdClass $schema, Context $context)
     {
         if (!isset($schema->format)) {
             return;
@@ -31,13 +32,13 @@ class FormatConstraint extends Constraint
         switch ($schema->format) {
             case 'date':
                 if (!$date = $this->validateDateTime($value, 'Y-m-d')) {
-                    $this->addError($path, sprintf('Invalid date %s, expected format YYYY-MM-DD', json_encode($value)));
+                    $context->addError(sprintf('Invalid date %s, expected format YYYY-MM-DD', json_encode($value)));
                 }
                 break;
 
             case 'time':
                 if (!$this->validateDateTime($value, 'H:i:s')) {
-                    $this->addError($path, sprintf('Invalid time %s, expected format hh:mm:ss', json_encode($value)));
+                    $context->addError(sprintf('Invalid time %s, expected format hh:mm:ss', json_encode($value)));
                 }
                 break;
 
@@ -47,69 +48,69 @@ class FormatConstraint extends Constraint
                     !$this->validateDateTime($value, 'Y-m-d\TH:i:sP') &&
                     !$this->validateDateTime($value, 'Y-m-d\TH:i:sO')
                 ) {
-                    $this->addError($path, sprintf('Invalid date-time %s, expected format YYYY-MM-DDThh:mm:ssZ or YYYY-MM-DDThh:mm:ss+hh:mm', json_encode($value)));
+                    $context->addError(sprintf('Invalid date-time %s, expected format YYYY-MM-DDThh:mm:ssZ or YYYY-MM-DDThh:mm:ss+hh:mm', json_encode($value)));
                 }
                 break;
 
             case 'utc-millisec':
                 if (!$this->validateDateTime($value, 'U')) {
-                    $this->addError($path, sprintf('Invalid time %s, expected integer of milliseconds since Epoch', json_encode($value)));
+                    $context->addError(sprintf('Invalid time %s, expected integer of milliseconds since Epoch', json_encode($value)));
                 }
                 break;
 
             case 'regex':
                 if (!$this->validateRegex($value)) {
-                    $this->addError($path, 'Invalid regex format ' . $value);
+                    $context->addError('Invalid regex format ' . $value);
                 }
                 break;
 
             case 'color':
                 if (!$this->validateColor($value)) {
-                    $this->addError($path, "Invalid color");
+                    $context->addError("Invalid color");
                 }
                 break;
 
             case 'style':
                 if (!$this->validateStyle($value)) {
-                    $this->addError($path, "Invalid style");
+                    $context->addError("Invalid style");
                 }
                 break;
 
             case 'phone':
                 if (!$this->validatePhone($value)) {
-                    $this->addError($path, "Invalid phone number");
+                    $context->addError("Invalid phone number");
                 }
                 break;
 
             case 'uri':
                 if (null === filter_var($value, FILTER_VALIDATE_URL, FILTER_NULL_ON_FAILURE)) {
-                    $this->addError($path, "Invalid URL format");
+                    $context->addError("Invalid URL format");
                 }
                 break;
 
             case 'email':
                 if (null === filter_var($value, FILTER_VALIDATE_EMAIL, FILTER_NULL_ON_FAILURE)) {
-                    $this->addError($path, "Invalid email");
+                    $context->addError("Invalid email");
                 }
                 break;
 
             case 'ip-address':
             case 'ipv4':
                 if (null === filter_var($value, FILTER_VALIDATE_IP, FILTER_NULL_ON_FAILURE | FILTER_FLAG_IPV4)) {
-                    $this->addError($path, "Invalid IP address");
+                    $context->addError("Invalid IP address");
                 }
                 break;
 
             case 'ipv6':
                 if (null === filter_var($value, FILTER_VALIDATE_IP, FILTER_NULL_ON_FAILURE | FILTER_FLAG_IPV6)) {
-                    $this->addError($path, "Invalid IP address");
+                    $context->addError("Invalid IP address");
                 }
                 break;
 
             case 'host-name':
             case 'hostname':
                 if (!$this->validateHostname($value)) {
-                    $this->addError($path, "Invalid hostname");
+                    $context->addError("Invalid hostname");
                 }
                 break;
 

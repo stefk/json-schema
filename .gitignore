@@ -3,6 +3,7 @@
 !/bin/validate-json
 coverage
 .buildpath
+.idea
 .project
 .settings
 composer.lock

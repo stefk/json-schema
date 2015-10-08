@@ -10,6 +10,7 @@
 namespace JsonSchema\Tests\Constraints;
 
 use JsonSchema\Constraints\UndefinedConstraint;
+use JsonSchema\Context;
 
 class RequiredPropertyTest extends BaseTestCase
 {
@@ -33,9 +34,10 @@ class RequiredPropertyTest extends BaseTestCase
         }'
         );
 
-        $validator->check($document, $schema);
-        $error = $validator->getErrors();
-        $this->assertErrorHasExpectedPropertyValue($error, "foo");
+        $context = new Context();
+        $validator->check($document, $schema, $context);
+        $errors = $context->getErrors();
+        $this->assertErrorHasExpectedPropertyValue($errors, "foo");
     }
 
     public function testErrorPropertyIsPopulatedForRequiredIfEmptyValueInInput()
@@ -58,9 +60,10 @@ class RequiredPropertyTest extends BaseTestCase
         }'
         );
 
-        $validator->check($document, $schema);
-        $error = $validator->getErrors();
-        $this->assertErrorHasExpectedPropertyValue($error, "foo");
+        $context = new Context();
+        $validator->check($document, $schema, $context);
+        $errors = $context->getErrors();
+        $this->assertErrorHasExpectedPropertyValue($errors, "foo");
     }
 
     protected function assertErrorHasExpectedPropertyValue($error, $propertyValue)

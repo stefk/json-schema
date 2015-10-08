@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Tests\Constraints;
 
+use JsonSchema\Context;
 use JsonSchema\RefResolver;
 use JsonSchema\Uri\UriRetriever;
 use JsonSchema\Validator;
@@ -27,15 +28,17 @@ abstract class BaseTestCase extends \PHPUnit_Framework_TestCase
 
         $validator = new Validator($checkMode);
 
-        $validator->check(json_decode($input), $schema);
+        $context = new Context();
+        $validator->check(json_decode($input), $schema, $context);
 
         if (array() !== $errors) {
             $expected = var_export($errors, true);
-            $actual = var_export($validator->getErrors(), true);
+            $actual = var_export($context->getErrors(), true);
             $msg = sprintf("Actual:\n%s\nExpected:\n%s", $actual, $expected);
-            $this->assertEquals($errors, $validator->getErrors(), $msg);
+            $this->assertEquals($errors, $context->getErrors(), $msg);
         }
-        $this->assertFalse($validator->isValid(), print_r($validator->getErrors(), true));
+
+        $this->assertFalse($context->hasErrors(), 'At least one error was expected.');
     }
 
     /**
@@ -49,9 +52,16 @@ abstract class BaseTestCase extends \PHPUnit_Framework_TestCase
         $refResolver->resolve($schema);
 
         $validator = new Validator($checkMode);
+        $context = new Context();
+        $validator->check(json_decode($input), $schema, $context);
 
-        $validator->check(json_decode($input), $schema);
-        $this->assertTrue($validator->isValid(), print_r($validator->getErrors(), true));
+        $this->assertTrue(
+            !$context->hasErrors(),
+            sprintf(
+                "No errors were expected.\nErrors:\n%s",
+                var_export($context->getErrors(), true)
+            )
+        );
     }
 
     abstract public function getValidTests();

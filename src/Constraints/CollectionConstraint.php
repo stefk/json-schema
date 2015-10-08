@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Constraints;
 
+use JsonSchema\Context;
 use stdClass;
 
 /**
@@ -22,16 +23,16 @@ class CollectionConstraint extends Constraint
     /**
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema, $path = null, $i = null)
+    public function check($value, stdClass $schema, Context $context)
     {
         // Verify minItems
         if (isset($schema->minItems) && count($value) < $schema->minItems) {
-            $this->addError($path, "There must be a minimum of " . $schema->minItems . " items in the array");
+            $context->addError("There must be a minimum of " . $schema->minItems . " items in the array");
         }
 
         // Verify maxItems
         if (isset($schema->maxItems) && count($value) > $schema->maxItems) {
-            $this->addError($path, "There must be a maximum of " . $schema->maxItems . " items in the array");
+            $context->addError("There must be a maximum of " . $schema->maxItems . " items in the array");
         }
 
         // Verify uniqueItems
@@ -41,13 +42,13 @@ class CollectionConstraint extends Constraint
                 $unique = array_map(function($e) { return var_export($e, true); }, $value);
             }
             if (count(array_unique($unique)) != count($value)) {
-                $this->addError($path, "There are no duplicates allowed in the array");
+                $context->addError("There are no duplicates allowed in the array");
             }
         }
 
         // Verify items
         if (isset($schema->items)) {
-            $this->validateItems($value, $schema, $path, $i);
+            $this->validateItems($value, $schema, $context);
         }
     }
 
@@ -55,50 +56,55 @@ class CollectionConstraint extends Constraint
      * Validates the items
      *
      * @param array     $value
-     * @param \stdClass $schema
-     * @param string    $path
-     * @param string    $i
+     * @param stdClass  $schema
+     * @param Context   $context
      */
-    protected function validateItems($value, $schema = null, $path = null, $i = null)
+    protected function validateItems($value, stdClass $schema, Context $context)
     {
+        $basePath = $context->getPath();
+
         if (is_object($schema->items)) {
             // just one type definition for the whole array
             foreach ($value as $k => $v) {
-                $initErrors = $this->getErrors();
+                $context->setNode($v, Context::appendPath($basePath, $k));
+
+                $initErrors = $context->getErrors();
 
                 // First check if its defined in "items"
-                $this->checkUndefined($v, $schema->items, $path, $k);
+                $this->checkUndefined($v, $schema->items, $context);
 
                 // Recheck with "additionalItems" if the first test fails
-                if (count($initErrors) < count($this->getErrors()) && (isset($schema->additionalItems) && $schema->additionalItems !== false)) {
-                    $secondErrors = $this->getErrors();
-                    $this->checkUndefined($v, $schema->additionalItems, $path, $k);
+                if (count($initErrors) < count($context->getErrors()) && (isset($schema->additionalItems) && $schema->additionalItems !== false)) {
+                    $secondErrors = $context->getErrors();
+                    $this->checkUndefined($v, $schema->additionalItems, $context);
                 }
 
                 // Reset errors if needed
-                if (isset($secondErrors) && count($secondErrors) < count($this->getErrors())) {
+                if (isset($secondErrors) && count($secondErrors) < count($context->getErrors())) {
                     $this->errors = $secondErrors;
-                } else if (isset($secondErrors) && count($secondErrors) === count($this->getErrors())) {
+                } else if (isset($secondErrors) && count($secondErrors) === count($context->getErrors())) {
                     $this->errors = $initErrors;
                 }
             }
         } else {
             // Defined item type definitions
             foreach ($value as $k => $v) {
+                $context->setNode($v, Context::appendPath($basePath, $k));
+
                 if (array_key_exists($k, $schema->items)) {
-                    $this->checkUndefined($v, $schema->items[$k], $path, $k);
+                    $this->checkUndefined($v, $schema->items[$k], $context);
                 } else {
                     // Additional items
                     if (property_exists($schema, 'additionalItems')) {
                         if ($schema->additionalItems !== false) {
-                            $this->checkUndefined($v, $schema->additionalItems, $path, $k);
+                            $this->checkUndefined($v, $schema->additionalItems, $context);
                         } else {
-                            $this->addError(
-                                $path, 'The item ' . $i . '[' . $k . '] is not defined and the definition does not allow additional items');
+                            $context->addError(
+                                'The item ' . '[' . $k . '] is not defined and the definition does not allow additional items');
                         }
                     } else {
                         // Should be valid against an empty schema
-                        $this->checkUndefined($v, new \stdClass(), $path, $k);
+                        $this->checkUndefined($v, new \stdClass(), $context);
                     }
                 }
             }
@@ -106,7 +112,7 @@ class CollectionConstraint extends Constraint
             // Treat when we have more schema definitions than values, not for empty arrays
             if(count($value) > 0) {
                 for ($k = count($value); $k < count($schema->items); $k++) {
-                    $this->checkUndefined(new UndefinedConstraint(), $schema->items[$k], $path, $k);
+                    $this->checkUndefined(new UndefinedConstraint(), $schema->items[$k], $context);
                 }
             }
         }

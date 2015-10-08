@@ -10,6 +10,7 @@
 namespace JsonSchema\Tests\Constraints;
 
 use JsonSchema\Constraints\FormatConstraint;
+use JsonSchema\Context;
 
 class FormatTest extends BaseTestCase
 {
@@ -23,8 +24,9 @@ class FormatTest extends BaseTestCase
         $validator = new FormatConstraint();
         $schema = new \stdClass;
 
-        $validator->check('10', $schema);
-        $this->assertEmpty($validator->getErrors());
+        $context = new Context();
+        $validator->check('10', $schema, $context);
+        $this->assertEmpty($context->getErrors());
     }
 
     public function testRegex()
@@ -33,11 +35,13 @@ class FormatTest extends BaseTestCase
         $schema = new \stdClass;
         $schema->format = 'regex';
 
-        $validator->check('\d+', $schema);
-        $this->assertEmpty($validator->getErrors());
+        $context = new Context();
+        $validator->check('\d+', $schema, $context);
+        $this->assertEmpty($context->getErrors());
 
-        $validator->check('^(abc]', $schema);
-        $this->assertCount(1, $validator->getErrors());
+        $context = new Context();
+        $validator->check('^(abc]', $schema, $context);
+        $this->assertCount(1, $context->getErrors());
     }
 
     /**
@@ -49,8 +53,9 @@ class FormatTest extends BaseTestCase
         $schema = new \stdClass;
         $schema->format = $format;
 
-        $validator->check($string, $schema);
-        $this->assertEmpty($validator->getErrors());
+        $context = new Context();
+        $validator->check($string, $schema, $context);
+        $this->assertEmpty($context->getErrors());
     }
 
     /**
@@ -62,8 +67,9 @@ class FormatTest extends BaseTestCase
         $schema = new \stdClass;
         $schema->format = $format;
 
-        $validator->check($string, $schema);
-        $this->assertEquals(1, count($validator->getErrors()), 'Expected 1 error');
+        $context = new Context();
+        $validator->check($string, $schema, $context);
+        $this->assertEquals(1, count($context->getErrors()), 'Expected 1 error');
     }
 
     public function getValidFormats()

@@ -9,9 +9,8 @@
 
 namespace JsonSchema;
 
-use stdClass;
-use JsonSchema\Constraints\SchemaConstraint;
 use JsonSchema\Constraints\Constraint;
+use stdClass;
 
 /**
  * A JsonSchema Constraint
@@ -25,15 +24,25 @@ class Validator extends Constraint
     const SCHEMA_MEDIA_TYPE = 'application/schema+json';
 
     /**
-     * Validates the given data against the schema and returns an object containing the results
-     * Both the php object and the schema are supposed to be a result of a json_decode call.
-     * The validation works as defined by the schema proposal in http://json-schema.org
+     * Validates data against a given JSON schema. Both the value and the
+     * schema are supposed to be a result of a json_decode call. The
+     * validation works as defined by the schema proposal in http://json-schema.org
      *
      * {@inheritDoc}
      */
-    public function check($value, stdClass $schema, $path = null, $i = null)
+    public function check($value, stdClass $schema, Context $context)
     {
-        $this->checkUndefined($value, $schema, '', '');
-        $this->addErrors(array_unique($this->getErrors(), SORT_REGULAR));
+        $this->checkUndefined($value, $schema, $context);
     }
+
+    /*****************************************************************
+     * @todo
+     *
+     * Add method removed from Constraint:
+     *
+     * getErrors
+     * isValid
+     *
+     * Remove third param (and Constraint inheritance) ?
+     */
 }

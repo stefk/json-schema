@@ -9,6 +9,7 @@
 
 namespace JsonSchema\Tests\Uri;
 
+use JsonSchema\Context;
 use JsonSchema\Exception\JsonDecodingException;
 use JsonSchema\Validator;
 
@@ -55,8 +56,9 @@ class UriRetrieverTest extends \PHPUnit_Framework_TestCase
         $decodedJsonSchema = json_decode($childSchema);
 
         $this->validator->setUriRetriever($retrieverMock);
-        $this->validator->check($decodedJson, $decodedJsonSchema);
-        $this->assertTrue($this->validator->isValid());
+        $context = new Context();
+        $this->validator->check($decodedJson, $decodedJsonSchema, $context);
+        $this->assertFalse($context->hasErrors());
     }
 
     /**
@@ -71,8 +73,9 @@ class UriRetrieverTest extends \PHPUnit_Framework_TestCase
         $decodedJsonSchema = json_decode($childSchema);
 
         $this->validator->setUriRetriever($retrieverMock);
-        $this->validator->check($decodedJson, $decodedJsonSchema);
-        $this->assertFalse($this->validator->isValid());
+        $context = new Context();
+        $this->validator->check($decodedJson, $decodedJsonSchema, $context);
+        $this->assertTrue($context->hasErrors());
     }
 
     /**
@@ -87,8 +90,9 @@ class UriRetrieverTest extends \PHPUnit_Framework_TestCase
         $decodedJsonSchema = json_decode($childSchema);
 
         $this->validator->setUriRetriever($retrieverMock);
-        $this->validator->check($decodedJson, $decodedJsonSchema);
-        $this->assertFalse($this->validator->isValid());
+        $context = new Context();
+        $this->validator->check($decodedJson, $decodedJsonSchema, $context);
+        $this->assertTrue($context->hasErrors());
     }
 
     /**
@@ -103,8 +107,9 @@ class UriRetrieverTest extends \PHPUnit_Framework_TestCase
         $decodedJsonSchema = json_decode($childSchema);
 
         $this->validator->setUriRetriever($retrieverMock);
-        $this->validator->check($decodedJson, $decodedJsonSchema);
-        $this->assertTrue($this->validator->isValid());
+        $context = new Context();
+        $this->validator->check($decodedJson, $decodedJsonSchema, $context);
+        $this->assertFalse($context->hasErrors());
     }
 
     private static function setParentSchemaExtendsValue(&$parentSchema, $value)
